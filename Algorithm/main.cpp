@@ -23,104 +23,6 @@ int g[8][8]
 	{MAX, 5, MAX, MAX, 3, MAX, 2, 0}
 };
 
-class PQ
-{
-public:
-	PQ(bool b)
-	{
-		isMAX = b; // true로 하면 maxHeap
-	}
-
-	void push(int n)
-	{
-		v.push_back(n);
-		// vector을 사용했지만 배열로 해도 전혀 무방
-
-		int root = static_cast<int>(v.size()) - 1;
-		int c = root;
-
-		do
-		{ // 부모노드와 비교 후 자리 바꿈
-			root = max((c - 1) / 2, 0);
-			int rN = v[root];
-			int cN = v[c];
-
-			// minHeap, maxHeap을 고려해서 비교함수를 만듦
-			if (compare(rN, cN))
-			{
-				v[root] = cN;
-				v[c] = rN;
-			}
-
-			c = root;
-		} while (c > 0);
-	}
-
-	// minHeap과 maxHeap 사이에서 데이터 교환시 사용
-	void pop()
-	{
-		if (v.size() == 0) return;
-
-		int size = static_cast<int>(v.size()) - 1;
-
-		v[0] =v.back();
-		v.pop_back();
-
-		int c = 0;
-		int root = 0;
-
-		// 부모와 자식 비교 후 교환
-		do
-		{
-			c = (root * 2) + 1;
-			if (c >= size) break;
-
-			if (c < size -1  && compare(v[c], v[c + 1]))
-				c++;
-
-			int rN = v[root];
-			int cN = v[c];
-
-
-			if (c <= size && compare(rN, cN))
-			{
-				v[root] = cN;
-				v[c] = rN;
-			}
-
-			root = c;
-
-		} while (root < size);
-
-
-	}
-
-	int top()
-	{
-		if ((int)v.size() == 0) return -1;
-		return v[0];
-	}
-
-	bool compare(int r, int c)
-	{
-		if (isMAX) return r < c; // maxHeap은 큰게 위로
-		return r > c; // minHeap은 작은게 위로
-	}
-
-	int size()
-	{
-		return static_cast<int>(v.size());
-	}
-
-	bool empty()
-	{
-		return static_cast<int>(v.size()) == 0;
-	}
-
-public:
-	bool isMAX = false;
-	vector<int> v;
-};
 
 
 void dijkstra1(int start) 
@@ -154,7 +56,6 @@ int SmallIndex()
 			index = i;
 			min = cost[i];
 		}
-		countN++;
 	}
 
 	return index;
@@ -169,7 +70,8 @@ void dijkstra2(int start)
 
 	v[start] = true;
 
-	for (int i = 0; i < N - 1; i++)
+	// 8번 -> 6번만 반복 ( 첫번째 노드, 마지막 노드를 제외 )
+	for (int i = 0; i < N - 2; i++)
 	{
 		int current = SmallIndex();
 		v[current] = true;
@@ -181,44 +83,101 @@ void dijkstra2(int start)
 			countN++;
 		}  // 목표로하는 노드의 최소비용 = 현재 위치까지의 최소비용 + 현재 위치에서 목표 노드로의 비용
 	}
-} // countN = 112 
+} // countN = 48 (  + SamllIndex = 48 )
 
-void dijkstra3(int start)
+
+vector<pair<int, int>> vec[8];
+
+void dijkstra3(int start) // E* logE + E
 {
 	countN = 0;
-	PQ pq(false);
+	cost[start] = 0;
 
-	for (int i = 0; i < N; i++)
+	priority_queue<pair<int, int>> pq;
+	pq.push(make_pair(start, 0));
+
+	while (!pq.empty())
 	{
-		cost[i] = g[start][i]; // 시작 노드에서부터 모든 정점으로의 비용을 등록
-		pq.push(cost[i]);
-	}
+		int current = pq.top().second;
+		int dist = -pq.top().first; // min Heap으로 만들기 위해서 이렇게 함
+		pq.pop(); 
 
-	v[start] = true;
-
-	while(!pq.empty())
-	{
-		int current = pq.top();
-		pq.pop();
-
-		for (int dest = 0; dest < N; dest++)
+		if (cost[current] < dist) continue;
+		for (int i = 0; i < vec[current].size(); i++)
 		{
-			if (cost[dest] > cost[current] + g[current][dest])
-				cost[dest] = cost[current] + g[current][dest];
+			int next = vec[current][i].second - 1;
+
+			int nextDist = dist + vec[current][i].first;
+			if (nextDist < cost[next])
+			{
+				cost[next] = nextDist;
+				pq.push(make_pair(-nextDist, next));
+			}
 			countN++;
-		}  // 목표로하는 노드의 최소비용 = 현재 위치까지의 최소비용 + 현재 위치에서 목표 노드로의 비용
+		}
 	}
-} // countN = 112 
+
+} // countN = 30 ( E*logE + E )
 
 int main()
 {
 	
-	dijkstra3(0); // 0 2 1 1 2 2 3 5
+	dijkstra2(0); // 0 2 1 1 2 2 3 5
 	for (int i = 0; i < N; i++)
 		cout << cost[i] << " ";
 
 	cout << "\n" << countN << "\n"; 
 	
+#pragma region Edge
+	vec[0].push_back(make_pair(2, 2));
+	vec[0].push_back(make_pair(1, 3));
+	vec[0].push_back(make_pair(1, 4));
+
+	vec[1].push_back(make_pair(2, 1));
+	vec[1].push_back(make_pair(2, 4));
+	vec[1].push_back(make_pair(4, 5));
+	vec[1].push_back(make_pair(5, 8));
+
+	vec[2].push_back(make_pair(1, 1));
+	vec[2].push_back(make_pair(2, 4));
+	vec[2].push_back(make_pair(1, 6));
+
+	vec[3].push_back(make_pair(1, 1));
+	vec[3].push_back(make_pair(2, 2));
+	vec[3].push_back(make_pair(2, 3));
+	vec[3].push_back(make_pair(1, 5));
+	vec[3].push_back(make_pair(3, 6));
+	vec[3].push_back(make_pair(2, 7));
+
+	vec[4].push_back(make_pair(4, 2));
+	vec[4].push_back(make_pair(1, 4));
+	vec[4].push_back(make_pair(2, 7));
+	vec[4].push_back(make_pair(3, 8));
+
+	vec[5].push_back(make_pair(1, 3));
+	vec[5].push_back(make_pair(3, 4));
+	vec[5].push_back(make_pair(1, 7));
+
+	vec[6].push_back(make_pair(2, 4));
+	vec[6].push_back(make_pair(2, 5));
+	vec[6].push_back(make_pair(1, 6));
+	vec[6].push_back(make_pair(2, 8));
+
+	vec[7].push_back(make_pair(5, 2));
+	vec[7].push_back(make_pair(3, 5));
+	vec[7].push_back(make_pair(2, 7));
+#pragma endregion
+
+	fill(cost, cost + N, MAX);
+
+	dijkstra3(0);
+	for (int i = 0; i < N; i++)
+		cout << cost[i] << " ";
+
+	cout << "\n" << countN << "\n";
+
+
+
 	
 	return 0;
 }
