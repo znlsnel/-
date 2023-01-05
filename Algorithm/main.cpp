@@ -1,57 +1,28 @@
 #include <iostream>
-#include <vector>
-#include <string>
+
 using namespace std;
 
-vector<int> makeTable(string Pattern)
+int n = 1000;
+bool a[1000];
+
+void PrimeNumber() 
 {
-        vector<int> table(Pattern.size(), 0);
+	for (int i = 2; i < n; i++)
+		a[i] = true;
 
-        for (int tail = 1, head = 0; tail < Pattern.length(); tail++)
-        {
-                while (head > 0 && Pattern[tail] != Pattern[head])
-                        head = table[head - 1];
-
-                if (Pattern[tail] == Pattern[head])
-                        table[tail] = ++head;
-        }
-
-
-        return table;
+	for (int i = 2; i < n; i++)
+	{
+		if (a[i] == false) continue;
+		for (int j = i * 2; j < n; j += i)
+			a[j] = false;
+	}
+	for (int i = 2; i < n; i++)
+		if (a[i]) cout << i << " ";
 }
 
-void KMP(string parent, string pattern)
+int main()
 {
-        vector<int> table = makeTable(pattern);
-        int parentSize = parent.size();
-        int patternSize = pattern.size();
-
-        int j = 0;
-        for (int i = 0; i < parentSize; i++)
-        {
-                while (j > 0 && parent[i] != pattern[j])
-                {
-                        j = table[j - 1];
-                }
-                if (parent[i] == pattern[j])
-                {
-                        if (j == patternSize - 1)
-                        {
-                                cout << i - patternSize + 2 << "에서 패턴을 찾았습니다." << endl;
-                                j = table[j];
-                        }
-                        else
-                        {
-                                j++;
-                        }
-                }
-        }
+	PrimeNumber();
+	return 0;
 }
 
-int main() {
-        string parent = "abcdabcabb";
-        string pattern = "abc";
-        KMP(parent, pattern);
-
-        return 0;
-}
