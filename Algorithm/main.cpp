@@ -1,66 +1,104 @@
 #include <iostream>
 #include <vector>
-#include <algorithm>
 #include <queue>
 
+#define MAX 100
+#define INF 100000000
+
 using namespace std;
-#define MAX 7
 
-vector<int> v[MAX];
-int inDegree[MAX + 1];
-
-void TopologySort()
+int n = 6, result;
+int cost[MAX][MAX], flow[MAX][MAX], parent[MAX];
+vector<int> a[MAX];
+void maxFlow(int start, int end)
 {
-
-	queue<int> q;
-	vector<int> result;
-
-	for (int i = 1; i <= MAX ; i++)
-		if (inDegree[i] == 0) q.push(i);
-
-	for (int i = 1; i <= MAX; i++)
+	while (1)
 	{
-		if (q.empty())
+		fill(parent, parent + MAX, -1);
+		queue<int> q;
+		q.push(start);
+		while (!q.empty())
 		{
-			cout << "순환 발생" << endl;
-			return;
-		}
-		
-		int a = q.front();
-		result.push_back(a);
-		q.pop();
-
-		for (int j = 0; j < v[a].size(); j++)
-		{
-			int b = v[a][j];
-			if (--inDegree[b] == 0)
+			int curr = q.front();
+			q.pop();
+			for (int i = 0; i < a[curr].size(); i++)
 			{
-				q.push(b);
+				int next = a[curr][i];
+				if (cost[curr][next] - flow[curr][next] > 0 && parent[next] == -1)
+				{
+					q.push(next);
+					parent[next] = curr;
+					if (next == end) break;
+				}
 			}
 		}
+		// end와 연결된 간선이 없다는 뜻이기에 break;
+		if (parent[end] == -1)
+		{
+			break;
+		}
+		int Minflow = INF;
+
+		// 거꾸로 최소 유량 탐색
+		for (int i = end; i != start; i = parent[i])
+		{
+			Minflow = min(Minflow, cost[parent[i]][i] - flow[parent[i]][i]);
+		}
+
+		// 최소 유량만큼 더해줌
+		for (int i = end; i != start; i = parent[i])
+		{
+			flow[parent[i]][i] += Minflow;
+			flow[i][parent[i]] -= Minflow;
+		}
+		result += Minflow;
+
 	}
-	for (int i = 0; i < result.size(); i++)
-		cout << result[i] << " ";
-	
 }
 
 int main()
 {
+	a[1].push_back(2);
+	a[2].push_back(1);
+	cost[1][2] = 12;
 
-	v[1].push_back(2);
-	inDegree[2]++;
-	v[1].push_back(5);
-	inDegree[5]++;
-	v[2].push_back(3);
-	inDegree[3]++;
-	v[3].push_back(4);
-	inDegree[4]++;
-	v[4].push_back(6);
-	inDegree[6]++;
-	v[5].push_back(6);
-	inDegree[6]++;
-	v[6].push_back(7);
-	inDegree[7]++;
-	TopologySort();
+	a[1].push_back(4);
+	a[4].push_back(1);
+	cost[1][4] = 11;
+
+	a[2].push_back(3);
+	a[3].push_back(2);
+	cost[2][3] = 6;
+
+	a[2].push_back(4);
+	a[4].push_back(2);
+	cost[2][4] = 3;
+
+	a[2].push_back(5);
+	a[5].push_back(2);
+	cost[2][5] = 5;
+
+	a[2].push_back(6);
+	a[6].push_back(2);
+	cost[2][6] = 9;
+
+	a[3].push_back(6);
+	a[6].push_back(3);
+	cost[3][6] = 8;
+
+	a[4].push_back(5);
+	a[5].push_back(4);
+	cost[4][5] = 9;
+
+	a[5].push_back(3);
+	a[3].push_back(5);
+	cost[5][3] = 3;
+
+	a[5].push_back(6);
+	a[6].push_back(5);
+	cost[5][6] = 4;
+
+	maxFlow(1, 6);
+	cout << result << endl;
 	return 0;
 }
