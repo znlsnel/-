@@ -1,104 +1,51 @@
 #include <iostream>
 #include <vector>
-#include <queue>
-
-#define MAX 100
-#define INF 100000000
 
 using namespace std;
 
-int n = 6, result;
-int cost[MAX][MAX], flow[MAX][MAX], parent[MAX];
-vector<int> a[MAX];
-void maxFlow(int start, int end)
+void findString(string parent, string pattern)
 {
-	while (1)
+	int parentSize = parent.size();
+	int patternSize = pattern.size();
+	int parentHash = 0, patternHash = 0, power = 1;
+	for (int i = 0; i <= parentSize - patternSize; i++)
 	{
-		fill(parent, parent + MAX, -1);
-		queue<int> q;
-		q.push(start);
-		while (!q.empty())
+		if (i == 0)
 		{
-			int curr = q.front();
-			q.pop();
-			for (int i = 0; i < a[curr].size(); i++)
+			for (int j = 0; j < patternSize; j++)
 			{
-				int next = a[curr][i];
-				if (cost[curr][next] - flow[curr][next] > 0 && parent[next] == -1)
+				parentHash += parent[patternSize - 1 - j] * power;
+				patternHash += pattern[patternSize - 1 - j] * power;
+				if (j < patternSize - 1) power *= 2;
+			}
+		} 
+		else
+		{
+			parentHash = 2 * (parentHash - parent[i - 1] * power) + parent[patternSize - 1 + i];
+		}
+
+		if (parentHash == patternHash)
+		{
+			bool finded = true;
+			for (int j = 0; j < patternSize; j++)
+			{
+				if (parent[i + j] != pattern[j])
 				{
-					q.push(next);
-					parent[next] = curr;
-					if (next == end) break;
+					finded = false;
+					break;
 				}
 			}
+			if (finded)
+			{
+				cout << i + 1<< "번째에서 패턴을 찾았습니다." << "\n";
+			}
 		}
-		// end와 연결된 간선이 없다는 뜻이기에 break;
-		if (parent[end] == -1)
-		{
-			break;
-		}
-		int Minflow = INF;
-
-		// 거꾸로 최소 유량 탐색
-		for (int i = end; i != start; i = parent[i])
-		{
-			Minflow = min(Minflow, cost[parent[i]][i] - flow[parent[i]][i]);
-		}
-
-		// 최소 유량만큼 더해줌
-		for (int i = end; i != start; i = parent[i])
-		{
-			flow[parent[i]][i] += Minflow;
-			flow[i][parent[i]] -= Minflow;
-		}
-		result += Minflow;
-
 	}
 }
-
 int main()
 {
-	a[1].push_back(2);
-	a[2].push_back(1);
-	cost[1][2] = 12;
-
-	a[1].push_back(4);
-	a[4].push_back(1);
-	cost[1][4] = 11;
-
-	a[2].push_back(3);
-	a[3].push_back(2);
-	cost[2][3] = 6;
-
-	a[2].push_back(4);
-	a[4].push_back(2);
-	cost[2][4] = 3;
-
-	a[2].push_back(5);
-	a[5].push_back(2);
-	cost[2][5] = 5;
-
-	a[2].push_back(6);
-	a[6].push_back(2);
-	cost[2][6] = 9;
-
-	a[3].push_back(6);
-	a[6].push_back(3);
-	cost[3][6] = 8;
-
-	a[4].push_back(5);
-	a[5].push_back(4);
-	cost[4][5] = 9;
-
-	a[5].push_back(3);
-	a[3].push_back(5);
-	cost[5][3] = 3;
-
-	a[5].push_back(6);
-	a[6].push_back(5);
-	cost[5][6] = 4;
-
-	maxFlow(1, 6);
-	cout << result << endl;
+	string parent = "ababacabacaabacaaba";
+	string pattern = "abacaaba";
+	findString(parent, pattern);
 	return 0;
 }
